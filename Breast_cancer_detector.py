@@ -31,15 +31,14 @@ def sigmoid_backward(dA, Z):
     dZ = dA * S * (1 - S)
     return dZ
 
-def initialize_parameters_deep(layer_dims):
+def initialize_parameters(layer_dims):
     np.random.seed(3)
     parameters = {}
     L = len(layer_dims)
-    
     for l in range(1, L):
-       parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * np.sqrt(2 / layer_dims[l - 1])
-       parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
-       
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * np.sqrt(2 / layer_dims[l - 1])
+        parameters['b' + str(l)] = np.zeros((layer_dims[l], 1))
+        
     return parameters
 
 def linear_activation_forward(A_prev, W, b, activation):
@@ -52,7 +51,7 @@ def linear_activation_forward(A_prev, W, b, activation):
     elif activation == "relu":
         A = relu(Z)
 
-    cache = ((A, W, b), Z)
+    cache = ((A_prev, W, b), Z)
     return A, cache
 
 def L_model_forward(X, parameters):
@@ -67,17 +66,15 @@ def L_model_forward(X, parameters):
     
     AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], "sigmoid")
     caches.append(cache)
-            
-    return AL, cache
+    return AL, caches
 
 def compute_cost(AL, Y):
     m = Y.shape[1]
-    cost = - 1/m * np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL))   
+    cost = (-1/m) * np.sum(Y * np.log(AL) + (1 - Y) * np.log(1 - AL), keepdims=True, axis=1)
     cost = np.squeeze(cost)
     return cost
 
 def linear_backward(dZ, cache):
-    
     A_prev, W, b = cache
     m = A_prev.shape[1]
     dW = 1/m * np.dot(dZ, A_prev.T)
@@ -87,16 +84,20 @@ def linear_backward(dZ, cache):
     return dA_prev, dW, db
 
 def linear_activation_backward(dA, cache, activation):
-
     linear_cache, Z = cache
+    
     if activation == "relu":
         dZ = relu_backward(dA, Z)
-    elif activation == "softmax":
-        dZ = softmax_backward(dA, Z)
+        dA_prev, dW, db = linear_backward(dZ, linear_cache)
+        
     elif activation == "sigmoid":
         dZ = sigmoid_backward(dA, Z)
+        dA_prev, dW, db = linear_backward(dZ, linear_cache)
         
-    dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    elif activation == "softmax":
+        dZ = softmax_backward(linear_cache)
+        dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    
     return dA_prev, dW, db
 
 def L_model_backward(AL, Y, caches):
@@ -125,15 +126,16 @@ def update_parameters(parameters, grads, learning_rate):
         parameters["b" + str(l+1)] -= learning_rate * grads["db" + str(l+1)]
     return parameters
 
-def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, print_cost=False):#lr was 0.009
+def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, print_cost=False):
 
     np.random.seed(1)
     costs = []
 
     parameters = initialize_parameters_deep(layers_dims)
     for i in range(0, num_iterations):
-
+        
         AL, caches = L_model_forward(X, parameters) 
+
         cost = compute_cost(AL, Y)
         grads = L_model_backward(AL, Y, caches)
         parameters = update_parameters(parameters, grads, learning_rate)
@@ -157,9 +159,9 @@ def main():
     X = np.array(df.iloc[:, 2:])
     X = Feature_scaling(X)
     X = X.T
-    Y = Y.reshape((len(Y), 1))
-    layers_dims = [X.shape[0], 4, 3, 1]
-    parameters = L_layer_model(X, Y, layers_dims, num_iterations = 900, print_cost = True)
+    Y = Y.reshape((1, len(Y)))
+    layers_dims = [X.shape[0], 40, 20, 1]
+    parameters = L_layer_model(X, Y, layers_dims, num_iterations = 5000, print_cost = True)
     
 if __name__ == "__main__":
     main();
