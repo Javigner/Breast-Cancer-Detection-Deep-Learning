@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
@@ -52,7 +53,6 @@ def linear_activation_forward(A_prev, W, b, activation):
         A = relu(Z)
 
     cache = ((A, W, b), Z)
-
     return A, cache
 
 def L_model_forward(X, parameters):
@@ -102,9 +102,7 @@ def linear_activation_backward(dA, cache, activation):
 def L_model_backward(AL, Y, caches):
     grads = {}
     L = len(caches)
-    m = AL.shape[1]
-    Y = Y.reshape(AL.shape)
-    
+    Y = Y.reshape(AL.shape) 
     dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
     
     current_cache = caches[L-1]
@@ -127,10 +125,42 @@ def update_parameters(parameters, grads, learning_rate):
         parameters["b" + str(l+1)] -= learning_rate * grads["db" + str(l+1)]
     return parameters
 
+def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 3000, print_cost=False):#lr was 0.009
 
-df = pd.read_csv('data.csv', header=None)
-Y = np.array(df[1])
-Y = np.where(Y == 'B', 0, 1)
-X = np.array(df.iloc[:, 2:])
-X = Feature_scaling(X)
+    np.random.seed(1)
+    costs = []
+
+    parameters = initialize_parameters_deep(layers_dims)
+    for i in range(0, num_iterations):
+
+        AL, caches = L_model_forward(X, parameters) 
+        cost = compute_cost(AL, Y)
+        grads = L_model_backward(AL, Y, caches)
+        parameters = update_parameters(parameters, grads, learning_rate)
+
+        if print_cost and i % 100 == 0:
+            print ("Cost after iteration %i: %f" %(i, cost))
+        if print_cost and i % 100 == 0:
+            costs.append(cost)
+            
+    plt.plot(np.squeeze(costs))
+    plt.ylabel('cost')
+    plt.xlabel('iterations (per hundreds)')
+    plt.title("Learning rate =" + str(learning_rate))
+    plt.show()
+    
+    return parameters
+def main():
+    df = pd.read_csv('data.csv', header=None)
+    Y = np.array(df[1])
+    Y = np.where(Y == 'B', 0, 1)
+    X = np.array(df.iloc[:, 2:])
+    X = Feature_scaling(X)
+    X = X.T
+    Y = Y.reshape((len(Y), 1))
+    layers_dims = [X.shape[0], 4, 3, 1]
+    parameters = L_layer_model(X, Y, layers_dims, num_iterations = 900, print_cost = True)
+    
+if __name__ == "__main__":
+    main();
 
