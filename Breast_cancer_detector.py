@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
@@ -130,8 +131,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
 
     np.random.seed(1)
     costs = []
-
-    parameters = initialize_parameters_deep(layers_dims)
+    parameters = initialize_parameters(layers_dims)
     for i in range(0, num_iterations):
         
         AL, caches = L_model_forward(X, parameters) 
@@ -158,11 +158,17 @@ def main():
     Y = np.where(Y == 'B', 0, 1)
     X = np.array(df.iloc[:, 2:])
     X = Feature_scaling(X)
-    X = X.T
-    Y = Y.reshape((1, len(Y)))
-    layers_dims = [X.shape[0], 40, 20, 1]
-    parameters = L_layer_model(X, Y, layers_dims, num_iterations = 5000, print_cost = True)
-    
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
+    X_train = X_train.T
+    y_train = y_train.reshape((1, len(y_train)))
+    X_test = X_test.T
+    y_test = y_test.reshape((1, len(y_test)))
+    layers_dims = [X_train.shape[0], 80, 40, 20, 10, 5, 1]
+    parameters = L_layer_model(X_train, y_train, layers_dims, num_iterations = 10000, print_cost = True)
+    Yhat, _ = L_model_forward(X_test, parameters)
+    Yhat = np.where(Yhat < 0.5, 0, 1)
+    result = (Yhat == y_test).mean()
+    print(result)
 if __name__ == "__main__":
     main();
 
