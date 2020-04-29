@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
+from tqdm import tqdm
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
     return X
@@ -26,13 +27,6 @@ def sigmoid_backward(dA, Z):
     S = sigmoid(Z)
     dZ = dA * S * (1 - S)
     return dZ
-
-def softmax_backward(dA,Z):
-    m = dA.shape[0]
-    grad = softmax(Z)
-    grad[range(m),dA] -= 1
-    grad = grad/m
-    return grad
 
 def initialize_parameters(layer_dims):
     np.random.seed(3)
@@ -115,11 +109,11 @@ def L_model_backward(AL, Y, caches):
     #dAL = - (np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
     
     current_cache = caches[L-1]
-    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(AL, AL, Y, current_cache, 'softmax')
+    grads["dA" + str(L-1)], grads["dW" + str(L)], grads["db" + str(L)] = linear_activation_backward(None, AL, Y, current_cache, 'softmax')
     
     for l in reversed(range(L-1)):
         current_cache = caches[l]
-        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(l + 1)], AL, Y, current_cache, 'relu')
+        dA_prev_temp, dW_temp, db_temp = linear_activation_backward(grads["dA" + str(l + 1)], None, None, current_cache, 'relu')
         grads["dA" + str(l)] = dA_prev_temp
         grads["dW" + str(l + 1)] = dW_temp
         grads["db" + str(l + 1)] = db_temp
@@ -139,7 +133,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
     np.random.seed(1)
     costs = []
     parameters = initialize_parameters(layers_dims)
-    for i in range(0, num_iterations):
+    for i in tqdm(range(0, num_iterations)):
         
         AL, caches = L_model_forward(X, parameters) 
         cost = cross_entropy(AL, Y)
@@ -147,9 +141,9 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
         grads = L_model_backward(AL, Y, caches)
         parameters = update_parameters(parameters, grads, learning_rate)
 
-        if print_cost and i % 100 == 0:
+        if print_cost and i % 10000 == 0:
             print ("Cost after iteration %i: %f" %(i, cost))
-        if print_cost and i % 100 == 0:
+        if print_cost and i % 1 == 0:
             costs.append(cost)
             
     plt.plot(np.squeeze(costs))
@@ -159,13 +153,14 @@ def L_layer_model(X, Y, layers_dims, learning_rate = 0.0075, num_iterations = 30
     plt.show()
     
     return parameters
+
 def main():
     df = pd.read_csv('data.csv', header=None)
     Y = np.array(df[1])
     Y = np.where(Y == 'B', 0, 1)
     X = np.array(df.iloc[:, 2:])
     X = Feature_scaling(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
     X_train = X_train.T
     #y_train = y_train.reshape((1, len(y_train)))
     X_test = X_test.T
@@ -173,15 +168,13 @@ def main():
     enc = OneHotEncoder(sparse=False, categories='auto')
     y_train = enc.fit_transform(y_train.reshape(len(y_train), -1))
     y_test = enc.transform(y_test.reshape(len(y_test), -1))
-    layers_dims = [X_train.shape[0], 80, 40, 20, 10, 5, 2]
-    parameters = L_layer_model(X_train, y_train, layers_dims, num_iterations = 50000, print_cost = True)
+    layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
+    parameters = L_layer_model(X_train, y_train, layers_dims, num_iterations = 10000, print_cost = True)
     Yhat, _ = L_model_forward(X_test, parameters)
     Yhat = np.where(Yhat < 0.5, 0, 1)
     Yhat = Yhat.T
-    print(Yhat.shape)
-    print(y_test.shape)
     result = (Yhat == y_test).mean()
-    print(result)
+    print("Accuracy : " + str(result * 100) + ' %')
 if __name__ == "__main__":
     main();
 
