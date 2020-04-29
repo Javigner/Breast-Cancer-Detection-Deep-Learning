@@ -62,7 +62,7 @@ def L_model_forward(X, parameters):
         A, cache = linear_activation_forward(A_prev, parameters['W' + str(l)], parameters['b' + str(l)], "relu")
         caches.append(cache)
     
-    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], "sigmoid")
+    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], "softmax")
     caches.append(cache)
     return AL, caches
 
