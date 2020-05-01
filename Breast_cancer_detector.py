@@ -159,10 +159,11 @@ def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.0075, num
             costs.append(cost)
             val_loss.append(loss)
             
-    plt.plot(np.squeeze(costs))
+    plt.plot(np.squeeze(costs), 'r--')
     plt.plot(np.squeeze(val_loss))
     plt.ylabel('cost')
-    plt.xlabel('iterations (per hundreds)')
+    plt.xlabel('epoch (per hundreds)')
+    plt.legend(['Loss','val_loss'])
     plt.title("Learning rate =" + str(learning_rate))
     plt.show()
     
@@ -196,7 +197,7 @@ def predict(Y, X, parameters, activation):
         Yhat = np.where(Yhat < 0.5, 0, 1)
     result = (Yhat == Y).mean()
     return result
-    
+
 def main():
     df = pd.read_csv('data.csv', header=None)
     activation = "sigmoid"
@@ -205,7 +206,7 @@ def main():
         layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
     elif activation == "sigmoid":
         layers_dims = [X_train.shape[0], 40, 20, 10, 5, 1]
-    parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 100001, activation = activation, print_cost = True)
+    parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 10001, activation = activation, print_cost = True)
     Accuracy_train = predict(y_train, X_train, parameters, activation)
     Accuracy_test = predict(y_test, X_test, parameters, activation)
     print("Accuracy train: " + str(Accuracy_train * 100) + ' %')
