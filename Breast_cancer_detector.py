@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from tqdm import tqdm
+from sklearn.model_selection import cross_val_score
+import sys
+import pickle
 
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
@@ -135,7 +138,7 @@ def update_parameters(parameters, grads, learning_rate):
     return parameters
 
 def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.0075, num_iterations = 3000, activation="softmax", print_cost=False):
-
+    
     np.random.seed(1)
     costs = []
     val_loss = []
@@ -152,7 +155,6 @@ def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.0075, num
             loss = compute_cost(AL_test, y_test)
         grads = L_model_backward(AL, Y, caches, activation)
         parameters = update_parameters(parameters, grads, learning_rate)
-
         if print_cost and i % 1 == 0:
             print ("epoch %i/%i - loss: %f - val_loss: %f" %(i, num_iterations, cost, loss))
         if print_cost and i % 1 == 0:
@@ -168,6 +170,20 @@ def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.0075, num
     plt.show()
     
     return parameters
+
+def Preprocessing_predict(df, activation):
+    Y = np.array(df[1])
+    Y = np.where(Y == 'B', 0, 1)
+    X = np.array(df.iloc[:, 2:])
+    X = Feature_scaling(X)
+    X = X.T
+    if (activation == "sigmoid"):
+        Y = Y.reshape((1, len(Y)))
+    
+    if (activation == "softmax"):
+        enc = OneHotEncoder(sparse=False, categories='auto')
+        Y = enc.fit_transform(Y.reshape(len(Y), -1))
+    return X, Y
 
 def Preprocessing(df, activation):
     Y = np.array(df[1])
@@ -199,18 +215,28 @@ def predict(Y, X, parameters, activation):
     return result
 
 def main():
-    df = pd.read_csv('data.csv', header=None)
+    
+    df = pd.read_csv(sys.argv[1], header=None)
     activation = "sigmoid"
-    X_train, X_test, y_train, y_test = Preprocessing(df, activation) 
-    if activation == "softmax":
-        layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
-    elif activation == "sigmoid":
-        layers_dims = [X_train.shape[0], 40, 20, 10, 5, 1]
-    parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 10001, activation = activation, print_cost = True)
-    Accuracy_train = predict(y_train, X_train, parameters, activation)
-    Accuracy_test = predict(y_test, X_test, parameters, activation)
-    print("Accuracy train: " + str(Accuracy_train * 100) + ' %')
-    print("Accuracy test: " + str(Accuracy_test * 100) + ' %')
+    if str(sys.argv[2]) == "prediction":
+        with open("parameters.pkl", "rb") as fp:
+            parameters = pickle.load(fp)
+            X, Y = Preprocessing_predict(df, activation)
+            Accuracy_predict = predict(Y, X, parameters, activation)
+            print("Accuracy: " + str(Accuracy_predict * 100) + ' %')
+    elif str(sys.argv[2]) == "training":
+        X_train, X_test, y_train, y_test = Preprocessing(df, activation) 
+        if activation == "softmax":
+            layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
+        elif activation == "sigmoid":
+            layers_dims = [X_train.shape[0], 40, 20, 10, 5, 1]
+        parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 10000, activation = activation, print_cost = True)
+        with open('parameters.pkl', 'wb') as output:
+            pickle.dump(parameters, output)
+        Accuracy_train = predict(y_train, X_train, parameters, activation)
+        Accuracy_test = predict(y_test, X_test, parameters, activation)
+        print("Accuracy train: " + str(Accuracy_train * 100) + ' %')
+        print("Accuracy test: " + str(Accuracy_test * 100) + ' %')
     
 if __name__ == "__main__":
     main();
