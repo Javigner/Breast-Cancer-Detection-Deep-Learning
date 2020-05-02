@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from tqdm import tqdm
-from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix
 import sys
 import pickle
+
 
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
@@ -137,14 +137,13 @@ def update_parameters(parameters, grads, learning_rate):
         parameters["b" + str(l+1)] -= learning_rate * grads["db" + str(l+1)]
     return parameters
 
-def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.0075, num_iterations = 3000, activation="softmax", print_cost=False):
+def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.007, num_iterations = 3000, activation="softmax", print_cost=False):
     
     np.random.seed(1)
     costs = []
     val_loss = []
     parameters = initialize_parameters(layers_dims)
-    for i in tqdm(range(0, num_iterations)):
-        
+    for i in range(0, num_iterations):
         AL, caches = L_model_forward(X, parameters, activation) 
         AL_test, caches_test = L_model_forward(X_test, parameters, activation) 
         if activation == "softmax":
@@ -211,13 +210,17 @@ def predict(Y, X, parameters, activation):
         Yhat = Yhat.T
     if activation == "sigmoid":
         Yhat = np.where(Yhat < 0.5, 0, 1)
+    tn, fp, fn, tp = confusion_matrix(np.squeeze(Y), np.squeeze(Yhat)).ravel()
+    print("Confusion Matrix - True negative: %i, False postive: %i, False Negative: %i, True Positive: %i" %(tn, fp, fn, tp))
     result = (Yhat == Y).mean()
+    plt.show()
     return result
 
 def main():
-    
+    if (len(sys.argv) < 3):
+        sys.exit('Please give valid arguments')
     df = pd.read_csv(sys.argv[1], header=None)
-    activation = "sigmoid"
+    activation = "softmax"
     if str(sys.argv[2]) == "prediction":
         with open("parameters.pkl", "rb") as fp:
             parameters = pickle.load(fp)
@@ -230,13 +233,14 @@ def main():
             layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
         elif activation == "sigmoid":
             layers_dims = [X_train.shape[0], 40, 20, 10, 5, 1]
-        parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 10000, activation = activation, print_cost = True)
+        parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 32700, activation = activation, print_cost = True)
         with open('parameters.pkl', 'wb') as output:
             pickle.dump(parameters, output)
         Accuracy_train = predict(y_train, X_train, parameters, activation)
         Accuracy_test = predict(y_test, X_test, parameters, activation)
         print("Accuracy train: " + str(Accuracy_train * 100) + ' %')
         print("Accuracy test: " + str(Accuracy_test * 100) + ' %')
+        
     
 if __name__ == "__main__":
     main();
