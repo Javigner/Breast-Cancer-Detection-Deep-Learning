@@ -5,7 +5,7 @@
 
 An ANN is based on a collection of connected units or nodes called artificial neurons (analogous to biological neurons in an animal brain). Each connection (synapse) between neurons can transmit a signal from one to another. The receiving (postsynaptic) neuron can process the signal(s) and then signal downstream neurons connected to it. In common ANN implementations, the synapse signal is a real number, and the output of each neuron is calculated by a non-linear function of the sum of its input. Neurons and synapses may also have a weight that varies as learning proceeds, which can increase or decrease the strength of the signal that it sends downstream. Further, they may have a threshold such that only if the aggregate signal is below (or above) that level is the downstream signal sent.
 
-![Image of ANN](https://lh3.googleusercontent.com/proxy/8Q0L7VI_H3tjwCGayVdNesU0j-3Qb5QHgYKErTmwKASpv0vcCgUtn_eRQSDOP2Gjf1vVjKNuMzPDsgcfvNTXoZ9gxZ2qx3AlsezDSlZcatGjuw)
+![Image of ANN](https://www.google.com/url?sa=i&url=https%3A%2F%2Fmedium.com%2Fcoinmonks%2Fthe-artificial-neural-networks-handbook-part-1-f9ceb0e376b4&psig=AOvVaw36J46WPLhpa6-P5cWl6ecM&ust=1589125644640000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCKDZwb6Qp-kCFQAAAAAdAAAAABAD)
 
 For more information, [see](https://en.wikipedia.org/wiki/Artificial_neural_network)
 
