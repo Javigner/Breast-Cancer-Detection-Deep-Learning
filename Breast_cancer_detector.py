@@ -6,7 +6,13 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import confusion_matrix
 import sys
 import pickle
+import argparse
 
+parser = argparse.ArgumentParser(description='Breast Cancer Detection')
+parser.add_argument('Data.csv', metavar='Datafile-csv', nargs=1, help='Your Dataset in csv')
+parser.add_argument('Goal', type=str, nargs=1, help='Training or Prediction')
+parser.add_argument("--Activation_Function", help="Choose between sigmoid or softmax")
+args = parser.parse_args()
 
 def Feature_scaling(X):
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
@@ -51,8 +57,6 @@ def linear_activation_forward(A_prev, W, b, activation):
         A = sigmoid(Z)   
     elif activation == "relu":
         A = relu(Z)
-    elif activation == "softmax":
-        A = softmax(Z)
     cache = ((A_prev, W, b), Z)
     return A, cache
 
@@ -137,13 +141,13 @@ def update_parameters(parameters, grads, learning_rate):
         parameters["b" + str(l+1)] -= learning_rate * grads["db" + str(l+1)]
     return parameters
 
-def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.007, num_iterations = 3000, activation="softmax", print_cost=False):
+def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.02, num_iterations = 3000, activation="softmax", print_cost=False):
     
     np.random.seed(1)
     costs = []
     val_loss = []
     parameters = initialize_parameters(layers_dims)
-    for i in range(0, num_iterations):
+    for epoch in range(0, num_iterations):
         AL, caches = L_model_forward(X, parameters, activation) 
         AL_test, caches_test = L_model_forward(X_test, parameters, activation) 
         if activation == "softmax":
@@ -154,18 +158,20 @@ def L_layer_model(X, Y, X_test, y_test, layers_dims, learning_rate = 0.007, num_
             loss = compute_cost(AL_test, y_test)
         grads = L_model_backward(AL, Y, caches, activation)
         parameters = update_parameters(parameters, grads, learning_rate)
-        if print_cost and i % 1 == 0:
-            print ("epoch %i/%i - loss: %f - val_loss: %f" %(i, num_iterations, cost, loss))
-        if print_cost and i % 1 == 0:
+        if (epoch % 1000 == 0):
+            learning_rate = learning_rate / 1.05
+        if print_cost and epoch % 1 == 0:
+            print ("epoch %i/%i - loss: %f - val_loss: %f" %(epoch + 1, num_iterations, cost, loss))
+        if print_cost and epoch % 1 == 0:
             costs.append(cost)
             val_loss.append(loss)
             
     plt.plot(np.squeeze(costs), 'r--')
     plt.plot(np.squeeze(val_loss))
     plt.ylabel('cost')
-    plt.xlabel('epoch (per hundreds)')
+    plt.xlabel('epoch')
     plt.legend(['Loss','val_loss'])
-    plt.title("Learning rate =" + str(learning_rate))
+    plt.title("Final Learning rate =" + str(learning_rate))
     plt.show()
     
     return parameters
@@ -219,8 +225,16 @@ def predict(Y, X, parameters, activation):
 def main():
     if (len(sys.argv) < 3):
         sys.exit('Please give valid arguments')
-    df = pd.read_csv(sys.argv[1], header=None)
-    activation = "softmax"
+    if sys.argv[2] != 'prediction' and sys.argv[2] != 'training':
+        sys.exit('Please choose between prediction or training')
+    try:
+        df = pd.read_csv(sys.argv[1], header=None)
+    except:
+        sys.exit('Please give a valid dataset')
+    if (len(sys.argv) == 5):
+        activation = sys.argv[4]
+    else:
+        activation = 'softmax'
     if str(sys.argv[2]) == "prediction":
         with open("parameters.pkl", "rb") as fp:
             parameters = pickle.load(fp)
@@ -233,7 +247,7 @@ def main():
             layers_dims = [X_train.shape[0], 40, 20, 10, 5, 2]
         elif activation == "sigmoid":
             layers_dims = [X_train.shape[0], 40, 20, 10, 5, 1]
-        parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 32700, activation = activation, print_cost = True)
+        parameters = L_layer_model(X_train, y_train, X_test, y_test, layers_dims, num_iterations = 50000, activation = activation, print_cost = True)
         with open('parameters.pkl', 'wb') as output:
             pickle.dump(parameters, output)
         Accuracy_train = predict(y_train, X_train, parameters, activation)
