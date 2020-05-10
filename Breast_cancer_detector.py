@@ -10,7 +10,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Breast Cancer Detection')
 parser.add_argument('Data.csv', metavar='Datafile-csv', nargs=1, help='Your Dataset in csv')
-parser.add_argument('Goal', type=str, nargs=1, help='Training or Prediction')
+parser.add_argument('Goal', type=str, nargs=1, help='training or prediction')
 parser.add_argument("--Activation_Function", help="Choose between sigmoid or softmax")
 args = parser.parse_args()
 
